@@ -111,6 +111,7 @@ Set `Achievements.Enable = 0` in `achievements.conf` and restart the server.
 | [docs/architecture-analysis.md](docs/architecture-analysis.md) | Current architecture, event flow, data structures, technical debt |
 | [docs/hook-audit.md](docs/hook-audit.md) | Audit of all core hooks — required, replaceable, and obsolete |
 | [docs/event-architecture.md](docs/event-architecture.md) | Target modern event architecture and migration strategy |
+| [docs/classic-patch-modernization-report.md](docs/classic-patch-modernization-report.md) | Compile errors, failing patch hunks, ModuleMgr dependencies, and patch-footprint replacement recommendations |
 
 ### Required Core Changes
 
@@ -138,4 +139,3 @@ The GitHub Actions workflow (`.github/workflows/build.yml`) automatically:
 * Original port: https://github.com/tsaah/core/tree/hb-achievements
 * Module packaging: https://github.com/davidonete/cmangos-achievements
 * Client addon: https://github.com/celguar/Achiever
-
