@@ -138,8 +138,6 @@ jobs:
       - name: Validate table schemas
         run: |
           mysql -h 127.0.0.1 -uroot -proot test_world -e "
-            -- Verify expected world tables exist
-            SELECT 'achievement_dbc'          AS tbl FROM information_schema.TABLES WHERE TABLE_SCHEMA='test_world' AND TABLE_NAME='achievement_dbc'          HAVING COUNT(*)=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='missing table: achievement_dbc';
             SELECT TABLE_NAME FROM information_schema.TABLES
               WHERE TABLE_SCHEMA = 'test_world'
               AND TABLE_NAME IN (

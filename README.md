@@ -84,7 +84,7 @@ updated to work with the latest CMaNGOS Classic core and classic-db.
 | `Achievements.SendVisual` | `1` | Play visual effect on achievement earn |
 | `Achievements.RandomBots` | `0` | Enable achievements for random bots |
 | `Achievements.RandomBotsRealmFirst` | `0` | Allow bots to earn Realm First achievements |
-| `Achievements.AccountAchievenemts` | `0` | Sync achievements across all characters on an account |
+| `Achievements.AccountAchievenemts` | `0` | Sync achievements across all characters on an account (note: key name has a typo preserved for backward compatibility) |
 | `Achievements.EffectId` | `146` | Spell visual effect ID played on achievement earn |
 
 ---
