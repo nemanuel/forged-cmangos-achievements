@@ -20,6 +20,7 @@ jobs:
       # Treat compiler warnings as errors during CI
       CMAKE_FLAGS: >-
         -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_CXX_FLAGS=-fno-tree-vrp
         -DBUILD_GAME_SERVER=ON
         -DBUILD_LOGIN_SERVER=OFF
         -DBUILD_TOOLS=OFF
