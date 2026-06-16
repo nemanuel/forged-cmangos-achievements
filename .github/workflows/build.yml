@@ -54,7 +54,7 @@ jobs:
             libboost-thread-dev \
             libboost-program-options-dev \
             libboost-regex-dev \
-            libmariadb-dev \
+            default-libmysqlclient-dev \
             libssl-dev \
             libace-dev \
             pkg-config \
