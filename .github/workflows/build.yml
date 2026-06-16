@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["**"]
 
+permissions:
+  contents: read
+
 jobs:
   # ──────────────────────────────────────────────
   # Job 1: Build mangos-classic + achievements
@@ -20,6 +23,7 @@ jobs:
       # Treat compiler warnings as errors during CI
       CMAKE_FLAGS: >-
         -DCMAKE_BUILD_TYPE=Release
+        # Work around GCC 11 ICE in mangos-classic TileAssembler.cpp (VRP pass)
         -DCMAKE_CXX_FLAGS=-fno-tree-vrp
         -DBUILD_GAME_SERVER=ON
         -DBUILD_LOGIN_SERVER=OFF
