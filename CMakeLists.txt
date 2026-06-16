@@ -16,60 +16,77 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 
+cmake_minimum_required(VERSION 3.13)
+
 set(LIBRARY_NAME achievements)
 
-#Base files
-file(GLOB achievements_source ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h)
-    source_group("achievements" FILES ${achievements_source})
-
-#Define base source library
-set(LIBRARY_SRCS
-  ${achievements_source}
+# Base files
+file(GLOB achievements_source
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.h
 )
+source_group("achievements" FILES ${achievements_source})
 
-# Define ENABLE_PLAYERBOTS if need
-if (BUILD_PLAYERBOTS)
-  include_directories(${CMAKE_SOURCE_DIR}/src/modules/PlayerBots)
-  include_directories(${CMAKE_SOURCE_DIR}/dep/g3dlite)
-  add_definitions(-DENABLE_PLAYERBOTS)
-endif()
-
-include_directories(${CMAKE_SOURCE_DIR}/src/modules/modules/src)
-add_definitions(-DENABLE_MODULES)
-add_definitions(-DENABLE_ACHIEVEMENTS)
-
-# Define Expansion
-if ( ${CMAKE_PROJECT_NAME} MATCHES "Classic")
-  add_definitions(-DEXPANSION=0)
-endif()
-if ( ${CMAKE_PROJECT_NAME} MATCHES "TBC")
-  add_definitions(-DEXPANSION=1)
-endif()
-if ( ${CMAKE_PROJECT_NAME} MATCHES "WoTLK")
-  add_definitions(-DEXPANSION=2)
-endif()
+# Define base source library
+set(LIBRARY_SRCS
+    ${achievements_source}
+)
 
 add_library(${LIBRARY_NAME} STATIC ${LIBRARY_SRCS})
 
+# Define ENABLE_PLAYERBOTS if needed
+if(BUILD_PLAYERBOTS)
+    target_include_directories(${LIBRARY_NAME} PRIVATE
+        ${CMAKE_SOURCE_DIR}/src/modules/PlayerBots
+        ${CMAKE_SOURCE_DIR}/dep/g3dlite
+    )
+    target_compile_definitions(${LIBRARY_NAME} PRIVATE ENABLE_PLAYERBOTS)
+endif()
+
+# Module framework include and definitions
+target_include_directories(${LIBRARY_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/src/modules/modules/src
+)
+target_compile_definitions(${LIBRARY_NAME} PRIVATE
+    ENABLE_MODULES
+    ENABLE_ACHIEVEMENTS
+)
+
+# Expansion flag
+if(${CMAKE_PROJECT_NAME} MATCHES "Classic")
+    target_compile_definitions(${LIBRARY_NAME} PRIVATE EXPANSION=0)
+elseif(${CMAKE_PROJECT_NAME} MATCHES "TBC")
+    target_compile_definitions(${LIBRARY_NAME} PRIVATE EXPANSION=1)
+elseif(${CMAKE_PROJECT_NAME} MATCHES "WoTLK")
+    target_compile_definitions(${LIBRARY_NAME} PRIVATE EXPANSION=2)
+endif()
+
 target_link_libraries(${LIBRARY_NAME}
-  modules
-  shared
-  RecastNavigation::Detour
+    modules
+    shared
+    RecastNavigation::Detour
 )
 
 if(UNIX)
-  # Both systems don't have libdl and don't need them
-  if (NOT (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD"))
-    target_link_libraries(${LIBRARY_NAME} dl)
-  endif()
+    # FreeBSD and NetBSD do not have libdl
+    if(NOT (CMAKE_SYSTEM_NAME STREQUAL "FreeBSD" OR CMAKE_SYSTEM_NAME STREQUAL "NetBSD"))
+        target_link_libraries(${LIBRARY_NAME} dl)
+    endif()
 endif()
 
-set_target_properties(${LIBRARY_NAME} PROPERTIES PROJECT_LABEL "Achievements")
-set_target_properties(${LIBRARY_NAME} PROPERTIES FOLDER "Modules")
+set_target_properties(${LIBRARY_NAME} PROPERTIES
+    PROJECT_LABEL "Achievements"
+    FOLDER        "Modules"
+)
 
 # Install config files
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/achievements.conf.dist.in ${CMAKE_CURRENT_BINARY_DIR}/achievements.conf.dist)
-if (NOT CONF_INSTALL_DIR)
-  set(CONF_INSTALL_DIR ${CONF_DIR})
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/achievements.conf.dist.in
+    ${CMAKE_CURRENT_BINARY_DIR}/achievements.conf.dist
+)
+if(NOT CONF_INSTALL_DIR)
+    set(CONF_INSTALL_DIR ${CONF_DIR})
 endif()
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/achievements.conf.dist DESTINATION ${CONF_INSTALL_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/achievements.conf.dist
+    DESTINATION ${CONF_INSTALL_DIR}
+)

@@ -1,22 +1,141 @@
-# Achievements
-Achievements mod to make WoTLK achievements work on cmangos classic and tbc cores.
+# Achievements Module for CMaNGOS Classic
 
-![image](https://github.com/davidonete/cmangos-achievements/assets/11618807/caa813e9-0053-4405-8d00-cf04fe5c205f)
+[![Build & Validate](https://github.com/nemanuel/cmangos-achievements/actions/workflows/build.yml/badge.svg)](https://github.com/nemanuel/cmangos-achievements/actions/workflows/build.yml)
 
-This mod was ported from https://github.com/tsaah/core/tree/hb-achievements and modified to become a independent module as well as adding extra features.
+Backports WotLK achievements to CMaNGOS Classic (and optionally TBC).
 
-# Available Cores
-Classic and TBC
+This module was ported from https://github.com/tsaah/core/tree/hb-achievements and has been
+updated to work with the latest CMaNGOS Classic core and classic-db.
 
-# How to install
-1. Follow the instructions in https://github.com/davidonete/cmangos-modules?tab=readme-ov-file#how-to-install
-2. Enable the `BUILD_MODULE_ACHIEVEMENTS` flag in cmake and run cmake. The module should be installed in `src/modules/achievements`
-4. Copy the configuration file from `src/modules/achievements/src/achievements.conf.dist.in` and place it where your mangosd executable is. Also rename it to `achievements.conf`.
-5. Remember to edit the config file and modify the options you want to use.
-6. Lastly you will have to install the database changes located in the `src/modules/achievements/sql/install` folder, each folder inside represents where you should execute the queries. E.g. The queries inside of `src/modules/achievements/sql/install/world` will need to be executed in the world/mangosd database, the ones in `src/modules/achievements/sql/install/characters` in the characters database, etc...
-7. For being able to see the UI on the client you will need to download and install the following addon https://github.com/celguar/Achiever
+![Achievements UI](https://github.com/davidonete/cmangos-achievements/assets/11618807/caa813e9-0053-4405-8d00-cf04fe5c205f)
 
-# How to uninstall
-To remove achievements from your server you have multiple options, the first and easiest is to disable it from the `achievements.conf` file. The second option is to completely remove it from the server and db:
-1. Remove the `BUILD_MODULE_ACHIEVEMENTS` flag from your cmake configuration and recompile the game
-2. Execute the sql queries located in the `src/modules/achievements/sql/uninstall` folder. Each folder inside represents where you should execute the queries. E.g. The queries inside of `src/modules/achievements/sql/uninstall/world` will need to be executed in the world/mangosd database, the ones in `src/modules/achievements/sql/uninstall/characters` in the characters database, etc...
+---
+
+## Supported Cores
+
+| Core | Status |
+|------|--------|
+| CMaNGOS Classic | ✅ Supported |
+| CMaNGOS TBC | ✅ Supported |
+| CMaNGOS WoTLK | ❌ Not applicable |
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+* CMaNGOS Classic (or TBC) compiled and running
+* MySQL / MariaDB 8.0+
+* The [Achiever addon](https://github.com/celguar/Achiever) installed on the game client
+
+### Installation
+
+1. **Install the module framework** following the instructions at
+   https://github.com/davidonete/cmangos-modules#how-to-install
+
+2. **Place this module** in `src/modules/achievements` inside the CMaNGOS source tree:
+   ```bash
+   git clone https://github.com/nemanuel/cmangos-achievements \
+       mangos-classic/src/modules/achievements
+   ```
+
+3. **Enable the module** in CMake and recompile:
+   ```bash
+   cmake -DBUILD_MODULE_ACHIEVEMENTS=ON ..
+   make -j$(nproc)
+   ```
+
+4. **Install the configuration file** — copy
+   `src/modules/achievements/src/achievements.conf.dist.in` to the directory
+   containing your `mangosd` executable and rename it to `achievements.conf`.
+   Edit the options as needed (see [Configuration](#configuration)).
+
+5. **Install the database schemas** (first time only):
+   ```bash
+   # World database
+   mysql -u<user> -p<pass> <world_db>   < sql/install/world/01_world_data.sql
+   mysql -u<user> -p<pass> <world_db>   < sql/install/world/02_world_update.sql
+   mysql -u<user> -p<pass> <world_db>   < sql/install/world/03_world_locales.sql
+
+   # Characters database
+   mysql -u<user> -p<pass> <chars_db>   < sql/install/characters/characters.sql
+   ```
+
+6. **Upgrading an existing installation** — run the migration scripts instead:
+   ```bash
+   mysql -u<user> -p<pass> <world_db>   < sql/migrate/world_migrate.sql
+   mysql -u<user> -p<pass> <chars_db>   < sql/migrate/characters_migrate.sql
+   ```
+   The migration scripts are idempotent and safe to re-run.
+
+7. **Install the client addon** — download and install
+   https://github.com/celguar/Achiever
+
+---
+
+## Configuration
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `Achievements.Enable` | `0` | Enable the achievements system |
+| `Achievements.SendMessage` | `1` | Announce achievements in chat/guild |
+| `Achievements.SendAddon` | `1` | Send Achiever addon data packets |
+| `Achievements.SendVisual` | `1` | Play visual effect on achievement earn |
+| `Achievements.RandomBots` | `0` | Enable achievements for random bots |
+| `Achievements.RandomBotsRealmFirst` | `0` | Allow bots to earn Realm First achievements |
+| `Achievements.AccountAchievenemts` | `0` | Sync achievements across all characters on an account (note: key name has a typo preserved for backward compatibility) |
+| `Achievements.EffectId` | `146` | Spell visual effect ID played on achievement earn |
+
+---
+
+## Uninstallation
+
+**Option A — Disable only:**
+Set `Achievements.Enable = 0` in `achievements.conf` and restart the server.
+
+**Option B — Full removal:**
+1. Recompile without `-DBUILD_MODULE_ACHIEVEMENTS=ON`
+2. Remove database tables:
+   ```bash
+   mysql -u<user> -p<pass> <chars_db>   < sql/uninstall/characters/characters.sql
+   mysql -u<user> -p<pass> <world_db>   < sql/uninstall/world/world.sql
+   ```
+
+---
+
+## Architecture & Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/architecture-analysis.md](docs/architecture-analysis.md) | Current architecture, event flow, data structures, technical debt |
+| [docs/hook-audit.md](docs/hook-audit.md) | Audit of all core hooks — required, replaceable, and obsolete |
+| [docs/event-architecture.md](docs/event-architecture.md) | Target modern event architecture and migration strategy |
+
+### Required Core Changes
+
+A reduced patch to CMaNGOS Classic is required for ~23 game events that are
+not yet exposed by the CMaNGOS `ScriptMgr`.  See
+[docs/hook-audit.md](docs/hook-audit.md) for the complete list (Category A
+hooks) and [docs/event-architecture.md](docs/event-architecture.md) for the
+target minimal-patch design.
+
+---
+
+## CI
+
+The GitHub Actions workflow (`.github/workflows/build.yml`) automatically:
+
+1. Checks out the latest `mangos-classic` master
+2. Builds the core + achievements module
+3. Validates all SQL scripts against a live MySQL 8.0 instance
+4. Verifies idempotency of the migration scripts
+
+---
+
+## Credits
+
+* Original port: https://github.com/tsaah/core/tree/hb-achievements
+* Module packaging: https://github.com/davidonete/cmangos-achievements
+* Client addon: https://github.com/celguar/Achiever
+
