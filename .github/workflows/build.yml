@@ -1,0 +1,187 @@
+name: Build & Validate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: Build mangos-classic + achievements
+  # ──────────────────────────────────────────────
+  build:
+    name: Build (Ubuntu 22.04)
+    runs-on: ubuntu-22.04
+
+    env:
+      # Number of parallel make jobs
+      MAKEFLAGS: "-j$(nproc)"
+      # Treat compiler warnings as errors during CI
+      CMAKE_FLAGS: >-
+        -DCMAKE_BUILD_TYPE=Release
+        -DBUILD_GAME_SERVER=ON
+        -DBUILD_LOGIN_SERVER=OFF
+        -DBUILD_TOOLS=OFF
+        -DBUILD_EXTRACTORS=OFF
+        -DBUILD_PLAYERBOTS=OFF
+        -DBUILD_MODULE_ACHIEVEMENTS=ON
+        -DENABLE_WARNINGS_AS_ERRORS=OFF
+
+    steps:
+      - name: Check out achievements module
+        uses: actions/checkout@v4
+        with:
+          path: achievements
+
+      - name: Check out mangos-classic
+        uses: actions/checkout@v4
+        with:
+          repository: cmangos/mangos-classic
+          path: mangos-classic
+          # Use the latest commit on the master branch
+          ref: master
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            git \
+            libboost-filesystem-dev \
+            libboost-system-dev \
+            libboost-thread-dev \
+            libboost-program-options-dev \
+            libboost-regex-dev \
+            libmariadb-dev \
+            libssl-dev \
+            libace-dev \
+            pkg-config \
+            zlib1g-dev
+
+      - name: Place module inside core tree
+        run: |
+          mkdir -p mangos-classic/src/modules/achievements
+          cp -r achievements/. mangos-classic/src/modules/achievements/
+
+      - name: Configure CMake
+        run: |
+          cmake -S mangos-classic -B build \
+            ${{ env.CMAKE_FLAGS }}
+
+      - name: Build
+        run: cmake --build build ${{ env.MAKEFLAGS }}
+
+  # ──────────────────────────────────────────────
+  # Job 2: SQL syntax validation
+  # ──────────────────────────────────────────────
+  sql-validate:
+    name: SQL Validation
+    runs-on: ubuntu-22.04
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_world
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Check out achievements module
+        uses: actions/checkout@v4
+
+      - name: Create test databases
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot -e "
+            CREATE DATABASE IF NOT EXISTS test_world CHARACTER SET utf8mb4;
+            CREATE DATABASE IF NOT EXISTS test_chars CHARACTER SET utf8mb4;
+          "
+
+      - name: Run world install SQL
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot test_world \
+            < sql/install/world/01_world_data.sql
+          mysql -h 127.0.0.1 -uroot -proot test_world \
+            < sql/install/world/02_world_update.sql
+          mysql -h 127.0.0.1 -uroot -proot test_world \
+            < sql/install/world/03_world_locales.sql
+
+      - name: Run character install SQL
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot test_chars \
+            < sql/install/characters/characters.sql
+
+      - name: Run world migration SQL (idempotency check)
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot test_world \
+            < sql/migrate/world_migrate.sql
+          # Run a second time to verify idempotency
+          mysql -h 127.0.0.1 -uroot -proot test_world \
+            < sql/migrate/world_migrate.sql
+
+      - name: Run character migration SQL (idempotency check)
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot test_chars \
+            < sql/migrate/characters_migrate.sql
+          # Run a second time to verify idempotency
+          mysql -h 127.0.0.1 -uroot -proot test_chars \
+            < sql/migrate/characters_migrate.sql
+
+      - name: Validate table schemas
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot test_world -e "
+            -- Verify expected world tables exist
+            SELECT 'achievement_dbc'          AS tbl FROM information_schema.TABLES WHERE TABLE_SCHEMA='test_world' AND TABLE_NAME='achievement_dbc'          HAVING COUNT(*)=0 THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='missing table: achievement_dbc';
+            SELECT TABLE_NAME FROM information_schema.TABLES
+              WHERE TABLE_SCHEMA = 'test_world'
+              AND TABLE_NAME IN (
+                'achievement_dbc',
+                'achievement_criteria_dbc',
+                'achievement_category_dbc',
+                'achievement_criteria_data',
+                'achievement_reward',
+                'achievement_reward_locale'
+              )
+              ORDER BY TABLE_NAME;
+          " 2>&1 | tee /tmp/world_tables.txt
+
+          # Confirm all 6 tables are present
+          TABLE_COUNT=$(grep -c 'achievement' /tmp/world_tables.txt || true)
+          if [ "$TABLE_COUNT" -lt 6 ]; then
+            echo "ERROR: Expected 6 world tables, found $TABLE_COUNT"
+            exit 1
+          fi
+
+          mysql -h 127.0.0.1 -uroot -proot test_chars -e "
+            SELECT TABLE_NAME FROM information_schema.TABLES
+              WHERE TABLE_SCHEMA = 'test_chars'
+              AND TABLE_NAME IN (
+                'character_achievement',
+                'character_achievement_progress'
+              )
+              ORDER BY TABLE_NAME;
+          " 2>&1 | tee /tmp/char_tables.txt
+
+          TABLE_COUNT=$(grep -c 'character_achievement' /tmp/char_tables.txt || true)
+          if [ "$TABLE_COUNT" -lt 2 ]; then
+            echo "ERROR: Expected 2 character tables, found $TABLE_COUNT"
+            exit 1
+          fi
+
+          echo "All expected tables present."
+
+      - name: Run uninstall SQL (cleanup verification)
+        run: |
+          mysql -h 127.0.0.1 -uroot -proot test_world \
+            < sql/uninstall/world/world.sql
+          mysql -h 127.0.0.1 -uroot -proot test_chars \
+            < sql/uninstall/characters/characters.sql
+          echo "Uninstall SQL executed successfully."
