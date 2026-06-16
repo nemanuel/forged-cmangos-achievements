@@ -18,12 +18,8 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
-      # Number of parallel make jobs
-      MAKEFLAGS: "-j$(nproc)"
-      # Treat compiler warnings as errors during CI
       CMAKE_FLAGS: >-
         -DCMAKE_BUILD_TYPE=Release
-        # Work around GCC 11 ICE in mangos-classic TileAssembler.cpp (VRP pass)
         -DCMAKE_CXX_FLAGS=-fno-tree-vrp
         -DBUILD_GAME_SERVER=ON
         -DBUILD_LOGIN_SERVER=OFF
@@ -76,7 +72,7 @@ jobs:
             ${{ env.CMAKE_FLAGS }}
 
       - name: Build
-        run: cmake --build build ${{ env.MAKEFLAGS }}
+        run: cmake --build build -j$(nproc)
 
   # ──────────────────────────────────────────────
   # Job 2: SQL syntax validation
