@@ -20,7 +20,7 @@ BEGIN
     FROM information_schema.TABLES
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = tblname;
     IF eng = 'MyISAM' THEN
-        SET @sql = CONCAT('ALTER TABLE `', tblname, '` ENGINE=InnoDB');
+        SET @sql = CONCAT('ALTER TABLE `', tblname, '` ENGINE=InnoDB ROW_FORMAT=DYNAMIC');
         PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
     END IF;
 END$$
