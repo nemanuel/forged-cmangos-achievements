@@ -1655,16 +1655,16 @@ index e7506a6..dfd7d7f 100644
  
  /**
 @@ -486,6 +490,10 @@ void WorldSession::HandleMailTakeItem(WorldPacket& recv_data)
-        uint32 count = it->GetCount();                      // save counts before store and possible merge with deleting
-        pl->MoveItemToInventory(dest, it, true);
-
+         uint32 count = it->GetCount();                      // save counts before store and possible merge with deleting
+         pl->MoveItemToInventory(dest, it, true);
+ 
 +#ifdef ENABLE_MODULES
 +        sModuleMgr.OnMailTakeItem(m, pl, it, ObjectGuid(HIGHGUID_PLAYER, m->sender));
 +#endif
 +
-        CharacterDatabase.BeginTransaction();
-        pl->SaveInventoryAndGoldToDB();
-        pl->_SaveMail();
+         CharacterDatabase.BeginTransaction();
+         pl->SaveInventoryAndGoldToDB();
+         pl->_SaveMail();
 diff --git a/src/game/Quests/QuestHandler.cpp b/src/game/Quests/QuestHandler.cpp
 index 89a1501..065c00a 100644
 --- a/src/game/Quests/QuestHandler.cpp
@@ -1878,16 +1878,16 @@ index 802c86d..0db2e32 100644
  {
      WorldPacket data(SMSG_TRADE_STATUS, 13);
 @@ -491,6 +495,10 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
-        trader->SaveInventoryAndGoldToDB();
-        CharacterDatabase.CommitTransaction();
+         trader->SaveInventoryAndGoldToDB();
+         CharacterDatabase.CommitTransaction();
  
 +#ifdef ENABLE_MODULES
 +        sModuleMgr.OnTradeAccepted(_player, trader, my_trade, his_trade);
 +#endif
 +
-        info.Status = TRADE_STATUS_TRADE_COMPLETE;
-        trader->GetSession()->SendTradeStatus(info);
-        SendTradeStatus(info);
+         info.Status = TRADE_STATUS_TRADE_COMPLETE;
+         trader->GetSession()->SendTradeStatus(info);
+         SendTradeStatus(info);
 diff --git a/src/game/Tools/PlayerDump.cpp b/src/game/Tools/PlayerDump.cpp
 index 2377479..e018b14 100644
 --- a/src/game/Tools/PlayerDump.cpp
