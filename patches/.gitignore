@@ -1,0 +1,2 @@
+# Allow .patch files in this directory
+!*.patch
