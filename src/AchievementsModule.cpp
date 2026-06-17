@@ -24,12 +24,6 @@
 
 namespace cmangos_module
 {
-    static const std::array<std::string, 2> achievementsDBTables =
-    {
-        "character_achievement",
-        "character_achievement_progress"
-    };
-
     int32 GetBGTeamScore(BattleGround* bg, uint32 team)
     {
         if (bg)
@@ -5104,49 +5098,6 @@ namespace cmangos_module
         }
     }
 
-    void AchievementsModule::OnWriteDump(uint32 playerId, std::string& dump)
-    {
-        for (const std::string& dbTable : achievementsDBTables)
-        {
-            if (!dbTable.empty())
-            {
-                auto queryResult = CharacterDatabase.PQuery("SELECT * FROM %s WHERE guid = '%u'", dbTable.c_str(), playerId);
-                if (queryResult)
-                {
-                    do
-                    {
-                        std::ostringstream ss;
-                        ss << "INSERT INTO " << _TABLE_SIM_ << dbTable << _TABLE_SIM_ << " VALUES (";
-                        Field* fields = queryResult->Fetch();
-                        for (uint32 i = 0; i < queryResult->GetFieldCount(); ++i)
-                        {
-                            if (i != 0)
-                            {
-                                ss << ", ";
-                            }
-
-                            if (fields[i].IsNULL())
-                            {
-                                ss << "NULL";
-                            }
-                            else
-                            {
-                                std::string s = fields[i].GetCppString();
-                                CharacterDatabase.escape_string(s);
-                                ss << "'" << s << "'";
-                            }
-                        }
-
-                        ss << ");";
-                        dump += ss.str();
-                        dump += "\n";
-                    } 
-                    while (queryResult->NextRow());
-                }
-            }
-        }
-    }
-
     void AchievementsModule::OnUpdatePlayerScore(BattleGround* battleground, Player* player, uint8 scoreType, uint32 value)
     {
         PlayerAchievementMgr* playerMgr = GetPlayerAchievementMgr(player);
@@ -5745,19 +5696,6 @@ namespace cmangos_module
         return EXPANSION;
     }
 
-    bool AchievementsModule::IsModuleDumpTable(const std::string& dbTableName)
-    {
-        for (const std::string& dbTable : achievementsDBTables)
-        {
-            if (dbTableName == dbTable)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     void AchievementsModule::OnSellItem(AuctionEntry* auctionEntry, Player* player)
     {
         PlayerAchievementMgr* playerMgr = GetPlayerAchievementMgr(player);
@@ -5825,15 +5763,6 @@ namespace cmangos_module
         if (playerMgr)
         {
             playerMgr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_MAIL_ITEMS, item->GetCount());
-        }
-    }
-
-    void AchievementsModule::OnMailTakeMoney(Mail* mail, Player* player, uint32 amount, const ObjectGuid& sender)
-    {
-        PlayerAchievementMgr* playerMgr = GetPlayerAchievementMgr(player);
-        if (playerMgr)
-        {
-            playerMgr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_MAIL_GOLD, amount);
         }
     }
 
@@ -5948,15 +5877,6 @@ namespace cmangos_module
         if (playerMgr)
         {
             playerMgr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BUY_BANK_SLOT);
-        }
-    }
-
-    void AchievementsModule::OnBuyBackItem(Player* player, Item* item, uint32 money)
-    {
-        PlayerAchievementMgr* playerMgr = GetPlayerAchievementMgr(player);
-        if (playerMgr && item)
-        {
-            playerMgr->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_RECEIVE_EPIC_ITEM, item->GetEntry(), item->GetCount());
         }
     }
 
