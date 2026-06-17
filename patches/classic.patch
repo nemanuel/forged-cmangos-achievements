@@ -246,7 +246,7 @@ index dd33749..6094b9e 100644
 +    sModuleMgr.OnEndBattleGround(this, winner);
 +#endif
  }
- 
+
  /**
 @@ -1153,6 +1161,10 @@ void BattleGround::RemovePlayerAtLeave(ObjectGuid playerGuid, bool isOnTransport
              player->TeleportToBGEntryPoint();
@@ -1641,8 +1641,19 @@ index e7506a6..dfd7d7f 100644
 +    sModuleMgr.OnSendMail(pl, rc, reqmoney);
 +#endif
  }
-
+ 
  /**
+@@ -486,6 +490,10 @@ void WorldSession::HandleMailTakeItem(WorldPacket& recv_data)
+        uint32 count = it->GetCount();                      // save counts before store and possible merge with deleting
+        pl->MoveItemToInventory(dest, it, true);
+
++#ifdef ENABLE_MODULES
++        sModuleMgr.OnMailTakeItem(m, pl, it, ObjectGuid(HIGHGUID_PLAYER, m->sender));
++#endif
++
+        CharacterDatabase.BeginTransaction();
+        pl->SaveInventoryAndGoldToDB();
+        pl->_SaveMail();
 diff --git a/src/game/Quests/QuestHandler.cpp b/src/game/Quests/QuestHandler.cpp
 index 89a1501..065c00a 100644
 --- a/src/game/Quests/QuestHandler.cpp
