@@ -1649,7 +1649,7 @@ index e7506a6..dfd7d7f 100644
      CharacterDatabase.CommitTransaction();
 +
 +#ifdef ENABLE_MODULES
-+    sModuleMgr.OnSendMail(pl, rc, reqmoney);
++    sModuleMgr.OnSendMail(draft, pl, rc, reqmoney);
 +#endif
  }
  
