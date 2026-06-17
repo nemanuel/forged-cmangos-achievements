@@ -211,6 +211,17 @@ index bf787b3..9930eb6 100644
  INSTANTIATE_SINGLETON_1(AuctionHouseMgr);
  
  AuctionHouseMgr::AuctionHouseMgr()
+@@ -153,6 +157,10 @@ void AuctionHouseMgr::SendAuctionWonMail(AuctionEntry* auction)
+         MailDraft(msgAuctionWonSubject.str(), msgAuctionWonBody.str())
+         .AddItem(pItem)
+         .SendMailTo(MailReceiver(bidder, bidder_guid), auction, MAIL_CHECK_MASK_COPIED);
++
++#ifdef ENABLE_MODULES
++        sModuleMgr.OnActionBidWinning(auction, ownerGuid, bidder_guid);
++#endif
+     }
+     // receiver not exist
+     else
 @@ -799,6 +803,10 @@ bool AuctionEntry::UpdateBid(uint32 newbid, Player* newbidder /*=nullptr*/)
      bidder = newbidder ? newbidder->GetGUIDLow() : 0;
      bid = newbid;
