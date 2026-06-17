@@ -26,6 +26,7 @@ jobs:
         -DBUILD_TOOLS=OFF
         -DBUILD_EXTRACTORS=OFF
         -DBUILD_PLAYERBOTS=OFF
+        -DBUILD_MODULES=ON
         -DBUILD_MODULE_ACHIEVEMENTS=ON
         -DENABLE_WARNINGS_AS_ERRORS=OFF
 
@@ -60,6 +61,11 @@ jobs:
             libace-dev \
             pkg-config \
             zlib1g-dev
+
+      - name: Apply module framework patch
+        run: |
+          cd mangos-classic
+          git apply --whitespace=fix ../achievements/patches/classic.patch
 
       - name: Place module inside core tree
         run: |
