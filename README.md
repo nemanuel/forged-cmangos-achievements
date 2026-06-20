@@ -1,6 +1,6 @@
 # Achievements Module for CMaNGOS Classic
 
-[![Build & Validate](https://github.com/nemanuel/cmangos-achievements/actions/workflows/build.yml/badge.svg)](https://github.com/nemanuel/cmangos-achievements/actions/workflows/build.yml)
+[![Build & Validate](https://github.com/nemanuel/forged-cmangos-achievements/actions/workflows/build.yml/badge.svg)](https://github.com/nemanuel/forged-cmangos-achievements/actions/workflows/build.yml)
 
 Backports WotLK achievements to CMaNGOS Classic.
 
@@ -19,7 +19,7 @@ hook surface and a much smaller core patch.
 |------|--------|
 | CMaNGOS Classic | Supported |
 | CMaNGOS TBC | Untested |
-| CMaNGOS WoTLK | Not applicable |
+| CMaNGOS WoTLK | Unsupported |
 
 ## Latest CMaNGOS Compatibility
 
@@ -65,12 +65,12 @@ current CMaNGOS cores without reviving the old module framework.
 5. **Install the database schemas** (first time only) - run PowerShell commands:
    ```bash
    # World database
-   Get-ChildItem -Path "C:\Temp\cmangos\mangos-classic\src\modules\Achievements\sql\install\world\*.sql" | ForEach-Object {
+   Get-ChildItem -Path ".\mangos-classic\src\modules\Achievements\sql\install\world\*.sql" | ForEach-Object {
       Get-Content $_.FullName | mysql -u root -p --database=classicmangos
    }
 
    # Characters database
-   Get-ChildItem -Path "C:\Temp\cmangos\mangos-classic\src\modules\Achievements\sql\install\characters\*.sql" | ForEach-Object {
+   Get-ChildItem -Path ".\mangos-classic\src\modules\Achievements\sql\install\characters\*.sql" | ForEach-Object {
       Get-Content $_.FullName | mysql -u root -p --database=classiccharacters
    }
    ```
