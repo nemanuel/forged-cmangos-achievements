@@ -119,3 +119,17 @@ SET @sql = IF(
     'SELECT ''index already exists'' AS info'
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- ============================================================
+-- Remove invalid achievement_criteria_data entries for classes
+-- and races that do not exist in Classic WoW.
+-- Class 6 (Death Knight) only exists in WotLK.
+-- Race 10 (Blood Elf) and Race 11 (Draenei) only exist in TBC+.
+-- ============================================================
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 6302  AND `type` = 2 AND `value1` = 6  AND `value2` = 2;
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 6313  AND `type` = 2 AND `value1` = 6  AND `value2` = 1;
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 6319  AND `type` = 2 AND `value1` = 8  AND `value2` = 10;
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 6320  AND `type` = 2 AND `value1` = 2  AND `value2` = 11;
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 9124  AND `type` = 2 AND `value1` = 0  AND `value2` = 10;
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 9143  AND `type` = 2 AND `value1` = 0  AND `value2` = 11;
+DELETE FROM `achievement_criteria_data` WHERE `criteria_id` = 11163 AND `type` = 2 AND `value1` = 4  AND `value2` = 10;
