@@ -235,6 +235,20 @@ namespace cmangos_module
         ITEM_PILGRIMS_ATTIRE = 46800,
     };
 
+    // Checks whether the player has a specific item in any equipment slot.
+    // Uses GetItemByPos directly to avoid relying on HasItemWithIdEquipped,
+    // which may not be present in all supported cmangos builds.
+    static bool IsItemEquipped(Player const* player, uint32 itemId)
+    {
+        for (uint8 slot = EQUIPMENT_SLOT_START; slot < EQUIPMENT_SLOT_END; ++slot)
+        {
+            Item const* item = player->GetItemByPos(INVENTORY_SLOT_BAG_0, slot);
+            if (item && item->GetEntry() == itemId)
+                return true;
+        }
+        return false;
+    }
+
     class achievement_pb_pilgrims_peril : public AchievementCriteriaScript
     {
     public:
@@ -242,9 +256,9 @@ namespace cmangos_module
 
         bool OnCheck(Player* source, Unit* /*target*/, uint32 /*criteria_id*/) override
         {
-            return source->HasItemWithIdEquipped(ITEM_PILGRIMS_DRESS, 1)
-                || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ROBE, 1)
-                || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ATTIRE, 1);
+            return IsItemEquipped(source, ITEM_PILGRIMS_DRESS)
+                || IsItemEquipped(source, ITEM_PILGRIMS_ROBE)
+                || IsItemEquipped(source, ITEM_PILGRIMS_ATTIRE);
         }
     };
 
@@ -255,10 +269,10 @@ namespace cmangos_module
 
         bool OnCheck(Player* source, Unit* /*target*/, uint32 /*criteria_id*/) override
         {
-            return source->HasItemWithIdEquipped(ITEM_PILGRIMS_HAT, 1)
-                && (source->HasItemWithIdEquipped(ITEM_PILGRIMS_DRESS, 1)
-                    || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ROBE, 1)
-                    || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ATTIRE, 1));
+            return IsItemEquipped(source, ITEM_PILGRIMS_HAT)
+                && (IsItemEquipped(source, ITEM_PILGRIMS_DRESS)
+                    || IsItemEquipped(source, ITEM_PILGRIMS_ROBE)
+                    || IsItemEquipped(source, ITEM_PILGRIMS_ATTIRE));
         }
     };
 
