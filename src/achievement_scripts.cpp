@@ -227,6 +227,41 @@ namespace cmangos_module
         }
     };
 
+    enum PilgrimItems
+    {
+        ITEM_PILGRIMS_HAT    = 46723,
+        ITEM_PILGRIMS_DRESS  = 44785,
+        ITEM_PILGRIMS_ROBE   = 46824,
+        ITEM_PILGRIMS_ATTIRE = 46800,
+    };
+
+    class achievement_pb_pilgrims_peril : public AchievementCriteriaScript
+    {
+    public:
+        achievement_pb_pilgrims_peril() : AchievementCriteriaScript("achievement_pb_pilgrims_peril") { }
+
+        bool OnCheck(Player* source, Unit* /*target*/, uint32 /*criteria_id*/) override
+        {
+            return source->HasItemWithIdEquipped(ITEM_PILGRIMS_DRESS, 1)
+                || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ROBE, 1)
+                || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ATTIRE, 1);
+        }
+    };
+
+    class achievement_pb_terokkar_turkey_time : public AchievementCriteriaScript
+    {
+    public:
+        achievement_pb_terokkar_turkey_time() : AchievementCriteriaScript("achievement_pb_terokkar_turkey_time") { }
+
+        bool OnCheck(Player* source, Unit* /*target*/, uint32 /*criteria_id*/) override
+        {
+            return source->HasItemWithIdEquipped(ITEM_PILGRIMS_HAT, 1)
+                && (source->HasItemWithIdEquipped(ITEM_PILGRIMS_DRESS, 1)
+                    || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ROBE, 1)
+                    || source->HasItemWithIdEquipped(ITEM_PILGRIMS_ATTIRE, 1));
+        }
+    };
+
     void AddSC_achievement_scripts()
     {
         new achievement_resilient_victory();
@@ -241,5 +276,7 @@ namespace cmangos_module
         new achievement_arena_by_type("achievement_arena_5v5_check", ARENA_TYPE_5v5);
     #endif
         new achievement_killed_exp_or_honor_target();
+        new achievement_pb_pilgrims_peril();
+        new achievement_pb_terokkar_turkey_time();
     }
 }
