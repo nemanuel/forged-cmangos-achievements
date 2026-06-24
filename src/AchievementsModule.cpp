@@ -12,6 +12,11 @@
 #include "Spells/SpellMgr.h"
 #include "World/World.h"
 
+#if EXPANSION == 0
+extern DBCStorage<WorldMapAreaEntry> sWorldMapAreaStore;
+extern DBCStorage<WorldMapOverlayEntry> sWorldMapOverlayStore;
+#endif
+
 #ifdef ENABLE_PLAYERBOTS
 #include "playerbot/PlayerbotAI.h"
 #endif
